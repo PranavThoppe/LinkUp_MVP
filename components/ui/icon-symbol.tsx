@@ -17,6 +17,16 @@ const MAPPING = {
   'house.fill': 'home',
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
+  // iMessage-style icons used in the preview UI
+  plus: 'add',
+  'plus.circle.fill': 'add-circle',
+  camera: 'photo-camera',
+  waveform: 'graphic-eq',
+  'chevron.left': 'chevron-left',
+  'ellipsis.circle': 'more-horiz',
+  'video.fill': 'videocam',
+  'phone.fill': 'phone',
+  'arrow.up': 'north',
   'chevron.right': 'chevron-right',
 } as IconMapping;
 

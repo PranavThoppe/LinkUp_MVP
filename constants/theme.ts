@@ -5,26 +5,43 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// Single, dark-mode-only iMessage palette.
+// We still expose `light` and `dark` keys so existing hooks/components work,
+// but both point to the same dark values.
+
+const iMessageBlue = '#0A84FF';
+const iMessageBackground = '#000000';
+const iMessageIncoming = '#1C1C1E';
+const iMessageOutgoing = iMessageBlue;
+const iMessageSeparator = '#38383A';
+const iMessageTimestamp = '#6E6E73';
+const iMessageComposerBackground = '#1C1C1E';
+const iMessageComposerBorder = '#38383A';
+const iMessageAvatarBackground = '#636366';
+
+const baseDark = {
+  // Core app colors (aligned with iOS dark)
+  text: '#ECEDEE',
+  background: iMessageBackground,
+  tint: iMessageBlue,
+  icon: '#9BA1A6',
+  tabIconDefault: '#9BA1A6',
+  tabIconSelected: iMessageBlue,
+
+  // iMessage-specific colors
+  iMessageBackground,
+  iMessageBubbleIncoming: iMessageIncoming,
+  iMessageBubbleOutgoing: iMessageOutgoing,
+  iMessageSeparator,
+  iMessageTimestamp,
+  iMessageComposerBackground,
+  iMessageComposerBorder,
+  iMessageAvatarBackground,
+};
 
 export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+  light: baseDark,
+  dark: baseDark,
 };
 
 export const Fonts = Platform.select({
