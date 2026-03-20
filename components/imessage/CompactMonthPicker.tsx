@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   title: {
-    color: '#FFFFFF',
+    color: '#34C759',
     fontSize: 18,
     fontWeight: '700',
   },

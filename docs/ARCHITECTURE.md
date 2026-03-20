@@ -175,7 +175,7 @@ type Schedule = {
 
   // Mode-specific date range
   months?: { month: number; year: number }[]; // selected months, for 'month' mode
-  weekStart?: string;       // ISO date of Monday, for 'week' mode
+  week?: { startIso: string; endIso: string }; // inclusive ISO range, for 'week' mode
   specificDates?: string[]; // ISO dates, for 'days' mode
 
   createdAt: string;        // ISO timestamp

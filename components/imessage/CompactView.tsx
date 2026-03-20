@@ -14,22 +14,10 @@ type Props = {
   onSend?: (payload: {
     mode: ScheduleMode;
     months?: { month: number; year: number }[];
-    week?: { weekStartIso: string };
+    week?: { startIso: string; endIso: string };
     days?: { selectedDatesIso: string[] };
   }) => void;
 };
-
-function getMondayISO(d: Date) {
-  const date = new Date(d);
-  date.setHours(12, 0, 0, 0);
-  const dow = date.getDay(); // 0=Sun
-  const diffToMonday = (dow + 6) % 7;
-  date.setDate(date.getDate() - diffToMonday);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 function monthDefaults() {
   const now = new Date();
@@ -39,16 +27,18 @@ function monthDefaults() {
 export function CompactView({ onClose, onSend }: Props) {
   const [mode, setMode] = useState<ScheduleMode>('month');
   const [selectedMonths, setSelectedMonths] = useState(() => [monthDefaults()]);
-  const [weekStartIso, setWeekStartIso] = useState(() => getMondayISO(new Date()));
+  const [weekStartIso, setWeekStartIso] = useState<string | null>(null);
+  const [weekEndIso, setWeekEndIso] = useState<string | null>(null);
   const [selectedDatesIso, setSelectedDatesIso] = useState<string[]>([]);
 
   const schemeColors = Colors.dark;
 
   const canSend = useMemo(() => {
     if (mode === 'month') return selectedMonths.length > 0;
+    if (mode === 'week') return Boolean(weekStartIso && weekEndIso && weekStartIso <= weekEndIso);
     if (mode === 'days') return selectedDatesIso.length > 0;
-    return true;
-  }, [mode, selectedMonths.length, selectedDatesIso.length]);
+    return false;
+  }, [mode, selectedMonths.length, selectedDatesIso.length, weekStartIso, weekEndIso]);
 
   const handleSend = () => {
     if (!canSend) return;
@@ -56,7 +46,10 @@ export function CompactView({ onClose, onSend }: Props) {
     onSend?.({
       mode,
       months: mode === 'month' ? selectedMonths : undefined,
-      week: mode === 'week' ? { weekStartIso } : undefined,
+      week:
+        mode === 'week' && weekStartIso && weekEndIso
+          ? { startIso: weekStartIso, endIso: weekEndIso }
+          : undefined,
       days: mode === 'days' ? { selectedDatesIso } : undefined,
     });
 
@@ -79,6 +72,8 @@ export function CompactView({ onClose, onSend }: Props) {
           setSelectedMonths,
           weekStartIso,
           setWeekStartIso,
+          weekEndIso,
+          setWeekEndIso,
           selectedDatesIso,
           setSelectedDatesIso
         )}
@@ -99,13 +94,24 @@ function renderPicker(
   mode: ScheduleMode,
   selectedMonths: { month: number; year: number }[],
   setSelectedMonths: (v: { month: number; year: number }[]) => void,
-  weekStartIso: string,
-  setWeekStartIso: (v: string) => void,
+  weekStartIso: string | null,
+  setWeekStartIso: (v: string | null) => void,
+  weekEndIso: string | null,
+  setWeekEndIso: (v: string | null) => void,
   selectedDatesIso: string[],
   setSelectedDatesIso: (v: string[]) => void
 ): ReactNode {
   if (mode === 'week') {
-    return <CompactWeekPicker weekStartIso={weekStartIso} onChangeWeekStartIso={setWeekStartIso} />;
+    return (
+      <CompactWeekPicker
+        startIso={weekStartIso}
+        endIso={weekEndIso}
+        onChangeRange={({ startIso, endIso }) => {
+          setWeekStartIso(startIso);
+          setWeekEndIso(endIso);
+        }}
+      />
+    );
   }
 
   if (mode === 'days') {
