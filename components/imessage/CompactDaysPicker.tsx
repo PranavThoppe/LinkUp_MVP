@@ -29,6 +29,7 @@ export function CompactDaysPicker({ selectedDatesIso, onChangeSelectedDatesIso }
     const d = new Date();
     return toISODateLocal(d.getFullYear(), d.getMonth(), d.getDate());
   });
+  const [isPickerActive, setIsPickerActive] = useState(false);
 
   const pendingIso = useMemo(() => {
     return toISODateLocal(pendingDate.getFullYear(), pendingDate.getMonth(), pendingDate.getDate());
@@ -57,7 +58,14 @@ export function CompactDaysPicker({ selectedDatesIso, onChangeSelectedDatesIso }
   };
 
   const handlePickerChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (!date) return;
+    if (event.type === 'dismissed') {
+      setIsPickerActive(false);
+      return;
+    }
+    if (!date) {
+      setIsPickerActive(false);
+      return;
+    }
     setPendingDate(date);
     if (event.type === 'set') {
       const iso = toISODateLocal(date.getFullYear(), date.getMonth(), date.getDate());
@@ -99,15 +107,28 @@ export function CompactDaysPicker({ selectedDatesIso, onChangeSelectedDatesIso }
             </>
           ) : (
             <View style={styles.pickerInline}>
-              <DateTimePicker
-                mode="date"
-                value={pendingDate}
-                display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                onChange={handlePickerChange}
-                accentColor="green"
-                themeVariant="dark"
-                {...(Platform.OS === 'android' ? { textColor: '#34C759' } : {})}
-              />
+              <View
+                onTouchStart={() => setIsPickerActive(true)}
+                style={[styles.pickerShell, isPickerActive && styles.pickerShellActive]}>
+                <DateTimePicker
+                  mode="date"
+                  value={pendingDate}
+                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                  onChange={handlePickerChange}
+                  accentColor="green"
+                  themeVariant="dark"
+                  {...(Platform.OS === 'android' ? { textColor: '#34C759' } : {})}
+                />
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => {
+                  addIsoDate(pendingIso);
+                  setIsPickerActive(false);
+                }}
+                style={[styles.doneButton, isPickerActive && styles.doneButtonActive]}>
+                <Text style={[styles.doneButtonText, isPickerActive && styles.doneButtonTextActive]}>Done</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -119,31 +140,33 @@ export function CompactDaysPicker({ selectedDatesIso, onChangeSelectedDatesIso }
           <Text style={styles.selectedCount}>{selectedDatesIso.length}</Text>
         </View>
 
-        {selectedDatesIso.length === 0 ? (
-          <Text style={styles.emptyText}>Your chosen days appear below.</Text>
-        ) : selectedDatesIso.length <= 4 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-            {selectedDatesIso.map(iso => (
-              <View key={iso} style={styles.pill}>
-                <Text style={styles.pillText}>{formatShortDate(iso)}</Text>
-                <TouchableOpacity onPress={() => removeIsoDate(iso)} activeOpacity={0.7} style={styles.pillRemove}>
-                  <Text style={styles.pillRemoveText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
-        ) : (
-          <ScrollView style={styles.pillsScrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={styles.pillsWrap}>
-            {selectedDatesIso.map(iso => (
-              <View key={iso} style={styles.pill}>
-                <Text style={styles.pillText}>{formatShortDate(iso)}</Text>
-                <TouchableOpacity onPress={() => removeIsoDate(iso)} activeOpacity={0.7} style={styles.pillRemove}>
-                  <Text style={styles.pillRemoveText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
-        )}
+        <View style={styles.selectedContentArea}>
+          {selectedDatesIso.length === 0 ? (
+            <Text style={styles.emptyText}>Your chosen days appear below.</Text>
+          ) : selectedDatesIso.length <= 4 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+              {selectedDatesIso.map(iso => (
+                <View key={iso} style={styles.pill}>
+                  <Text style={styles.pillText}>{formatShortDate(iso)}</Text>
+                  <TouchableOpacity onPress={() => removeIsoDate(iso)} activeOpacity={0.7} style={styles.pillRemove}>
+                    <Text style={styles.pillRemoveText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <ScrollView style={styles.pillsScrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={styles.pillsWrap}>
+              {selectedDatesIso.map(iso => (
+                <View key={iso} style={styles.pill}>
+                  <Text style={styles.pillText}>{formatShortDate(iso)}</Text>
+                  <TouchableOpacity onPress={() => removeIsoDate(iso)} activeOpacity={0.7} style={styles.pillRemove}>
+                    <Text style={styles.pillRemoveText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -184,7 +207,37 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pickerInline: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  pickerShell: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    backgroundColor: '#1C1C1E',
+  },
+  pickerShellActive: {
+    backgroundColor: '#1C1C1E',
+  },
+  doneButton: {
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    backgroundColor: '#3A3A3C',
+  },
+  doneButtonActive: {
+    backgroundColor: '#0A84FF',
+  },
+  doneButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  doneButtonTextActive: {
+    color: '#FFFFFF',
   },
   webInputInline: {
     flex: 1,
@@ -201,6 +254,9 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     width: '100%',
+  },
+  selectedContentArea: {
+    minHeight: 35,
   },
   plusButton: {
     width: 32,
