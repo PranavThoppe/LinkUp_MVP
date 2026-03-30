@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   selectedLabel: {
-    color: '#6E6E73',
+    color: '#34C759',
     fontWeight: '700',
     fontSize: 12,
   },

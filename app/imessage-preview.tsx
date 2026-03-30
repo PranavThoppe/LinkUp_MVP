@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CalendarCard, type CalendarVote } from '@/components/imessage/CalendarCard';
+import { WeekCard, type WeekVote } from '@/components/imessage/WeekCard';
+import { DaysCard, type DaysVote } from '@/components/imessage/DaysCard';
 import { CompactView } from '../components/imessage/CompactView';
 
 type SenderId = 'P' | 'S' | 'J';
@@ -24,7 +26,12 @@ type LocalMessage = {
   fromMe: boolean;
   timestamp: string;
   sender?: SenderId;
+  /** Month-mode schedule card */
   calendarVotes?: CalendarVote[];
+  /** Week-mode schedule card */
+  weekData?: { startIso: string; endIso: string; votes: WeekVote[] };
+  /** Days-mode schedule card */
+  daysData?: { selectedDatesIso: string[]; votes: DaysVote[] };
 };
 
 const SENDERS: Record<SenderId, { initial: string; color: string }> = {
@@ -130,6 +137,53 @@ export default function ImessagePreviewScreen() {
     });
   }, [input]);
 
+  const handleScheduleSend = useCallback(
+    (payload: Parameters<NonNullable<React.ComponentProps<typeof CompactView>['onSend']>>[0]) => {
+      const now = new Date();
+      const timestamp = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      const id = `schedule-${Date.now()}`;
+
+      let newMessage: LocalMessage | null = null;
+
+      if (payload.mode === 'month' && payload.months && payload.months.length > 0) {
+        newMessage = {
+          id,
+          text: '',
+          fromMe: false,
+          timestamp,
+          sender: 'P',
+          calendarVotes: [],
+        };
+      } else if (payload.mode === 'week' && payload.week) {
+        newMessage = {
+          id,
+          text: '',
+          fromMe: false,
+          timestamp,
+          sender: 'P',
+          weekData: { startIso: payload.week.startIso, endIso: payload.week.endIso, votes: [] },
+        };
+      } else if (payload.mode === 'days' && payload.days) {
+        newMessage = {
+          id,
+          text: '',
+          fromMe: false,
+          timestamp,
+          sender: 'P',
+          daysData: { selectedDatesIso: payload.days.selectedDatesIso, votes: [] },
+        };
+      }
+
+      if (!newMessage) return;
+
+      setMessages(prev => [...prev, newMessage!]);
+      requestAnimationFrame(() => {
+        listRef.current?.scrollToEnd({ animated: true });
+      });
+    },
+    []
+  );
+
   const handlePlusPress = useCallback(() => {
     Keyboard.dismiss();
     setShowCompact(v => !v);
@@ -141,6 +195,35 @@ export default function ImessagePreviewScreen() {
         <View style={[styles.messageRow, styles.rowLeft]}>
           <View style={styles.calendarCardWrap}>
             <CalendarCard month={2} year={2026} votes={item.calendarVotes} senders={SENDERS} />
+          </View>
+        </View>
+      );
+    }
+
+    if (item.weekData) {
+      return (
+        <View style={[styles.messageRow, styles.rowLeft]}>
+          <View style={styles.calendarCardWrap}>
+            <WeekCard
+              startIso={item.weekData.startIso}
+              endIso={item.weekData.endIso}
+              votes={item.weekData.votes}
+              senders={SENDERS}
+            />
+          </View>
+        </View>
+      );
+    }
+
+    if (item.daysData) {
+      return (
+        <View style={[styles.messageRow, styles.rowLeft]}>
+          <View style={styles.calendarCardWrap}>
+            <DaysCard
+              selectedDatesIso={item.daysData.selectedDatesIso}
+              votes={item.daysData.votes}
+              senders={SENDERS}
+            />
           </View>
         </View>
       );
@@ -261,7 +344,7 @@ export default function ImessagePreviewScreen() {
       </KeyboardAvoidingView>
 
       <Animated.View style={[styles.compactPanelWrapper, compactPanelStyle]} pointerEvents={showCompact ? 'auto' : 'none'}>
-        <CompactView onClose={() => setShowCompact(false)} />
+        <CompactView onClose={() => setShowCompact(false)} onSend={handleScheduleSend} />
       </Animated.View>
     </SafeAreaView>
   );

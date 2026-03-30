@@ -1,0 +1,11 @@
+---
+description: LinkUp is iOS-only; agents optimize for Expo/React Native on iOS, not Android or web.
+alwaysApply: true
+---
+
+# Platform scope
+
+- **Shipping target: iOS only.** This repo is **Expo / React Native**; assume features, UI, navigation, and fixes are for **iOS** unless the user explicitly asks for another platform.
+- Do **not** add Android- or web-specific work, parity checklists, or “also support…” paths unless the user requests it.
+- Prefer **iOS-appropriate** APIs, patterns, and testing guidance (Simulator, TestFlight, iOS-specific RN/Expo behavior).
+- Existing `package.json` scripts for Android or web are **not** an invitation to implement or prioritize those platforms for this product.
