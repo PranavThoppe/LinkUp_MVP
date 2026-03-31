@@ -79,6 +79,35 @@ const INITIAL_MESSAGES: LocalMessage[] = [
       { sender: 'J', dates: [5, 14, 19, 20] },
     ],
   },
+  {
+    id: 'week-1',
+    text: '',
+    fromMe: false,
+    timestamp: '9:42 AM',
+    weekData: {
+      startIso: '2026-03-30',
+      endIso: '2026-04-05',
+      votes: [
+        { sender: 'P', dates: ['2026-03-30', '2026-04-01', '2026-04-03'] },
+        { sender: 'S', dates: ['2026-03-30', '2026-03-31', '2026-04-02'] },
+        { sender: 'J', dates: ['2026-04-02', '2026-04-05'] },
+      ],
+    },
+  },
+  {
+    id: 'days-1',
+    text: '',
+    fromMe: false,
+    timestamp: '9:43 AM',
+    daysData: {
+      selectedDatesIso: ['2026-04-10', '2026-04-12', '2026-04-15', '2026-04-18', '2026-04-22'],
+      votes: [
+        { sender: 'P', dates: ['2026-04-10', '2026-04-15', '2026-04-22'] },
+        { sender: 'S', dates: ['2026-04-10', '2026-04-12', '2026-04-18'] },
+        { sender: 'J', dates: ['2026-04-12', '2026-04-15'] },
+      ],
+    },
+  },
 ];
 
 export default function ImessagePreviewScreen() {
@@ -209,6 +238,7 @@ export default function ImessagePreviewScreen() {
               endIso={item.weekData.endIso}
               votes={item.weekData.votes}
               senders={SENDERS}
+              showPlaceholderWhenEmpty={item.weekData.votes.length === 0}
             />
           </View>
         </View>
@@ -223,6 +253,7 @@ export default function ImessagePreviewScreen() {
               selectedDatesIso={item.daysData.selectedDatesIso}
               votes={item.daysData.votes}
               senders={SENDERS}
+              showPlaceholderWhenEmpty={item.daysData.votes.length === 0}
             />
           </View>
         </View>

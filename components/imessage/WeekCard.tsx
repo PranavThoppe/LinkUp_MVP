@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { parseISODateLocal } from './calendarGrid';
+import { countVotersInSlot, maxSlotVoteCount } from './slotVoteCounts';
+import { buildPlaceholderVotes } from './votePlaceholders';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +29,8 @@ type Props = {
   endIso: string;
   votes: WeekVote[];
   senders: Record<SenderId, { initial: string; color: string }>;
+  /** When true and votes are empty, show sample fills in the grid (e.g. iMessage preview). */
+  showPlaceholderWhenEmpty?: boolean;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -137,13 +141,14 @@ function SlotGrid({ days, today, votesByDay, maxVotes, showVoterDots, senders }:
       </View>
 
       {/* Slot rows */}
-      {SLOTS.map(slot => (
+      {SLOTS.map((slot, slotIdx) => (
         <View key={slot} style={gridStyles.row}>
           <View style={gridStyles.labelCell}>
             <Text style={gridStyles.slotLabel}>{slot}</Text>
           </View>
           {days.map(iso => {
-            const count = votesByDay.get(iso)?.length ?? 0;
+            const voters = votesByDay.get(iso) ?? [];
+            const count = countVotersInSlot(voters, iso, slotIdx, SLOTS.length);
             const color = getVoteColor(count, maxVotes);
             return (
               <View key={`${slot}-${iso}`} style={gridStyles.dayCol}>
@@ -400,16 +405,29 @@ const expandedStyles = StyleSheet.create({
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export function WeekCard({ title, startIso, endIso, votes, senders }: Props) {
+export function WeekCard({
+  title,
+  startIso,
+  endIso,
+  votes,
+  senders,
+  showPlaceholderWhenEmpty = false,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
   const today = useMemo(() => todayIso(), []);
 
   const days = useMemo(() => getDaysInRange(startIso, endIso), [startIso, endIso]);
   const rangeLabel = useMemo(() => formatRangeLabel(startIso, endIso), [startIso, endIso]);
 
+  const effectiveVotes = useMemo(() => {
+    if (votes.length > 0) return votes;
+    if (!showPlaceholderWhenEmpty) return votes;
+    return buildPlaceholderVotes(days, senders) as WeekVote[];
+  }, [votes, showPlaceholderWhenEmpty, days, senders]);
+
   const votesByDay = useMemo(() => {
     const map = new Map<string, SenderId[]>();
-    for (const vote of votes) {
+    for (const vote of effectiveVotes) {
       for (const d of vote.dates) {
         const arr = map.get(d) ?? [];
         if (!arr.includes(vote.sender)) arr.push(vote.sender);
@@ -417,19 +435,18 @@ export function WeekCard({ title, startIso, endIso, votes, senders }: Props) {
       }
     }
     return map;
-  }, [votes]);
+  }, [effectiveVotes]);
 
-  const maxVotes = useMemo(() => {
-    let max = 0;
-    for (const arr of votesByDay.values()) max = Math.max(max, arr.length);
-    return max;
-  }, [votesByDay]);
+  const maxVotes = useMemo(
+    () => maxSlotVoteCount(votesByDay, days, SLOTS.length),
+    [votesByDay, days]
+  );
 
   const votedSenderIds = useMemo(() => {
     const set = new Set<SenderId>();
-    for (const v of votes) set.add(v.sender);
+    for (const v of effectiveVotes) set.add(v.sender);
     return Array.from(set);
-  }, [votes]);
+  }, [effectiveVotes]);
 
   return (
     <>
