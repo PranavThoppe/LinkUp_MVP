@@ -218,12 +218,30 @@ export default function ImessagePreviewScreen() {
     setShowCompact(v => !v);
   }, []);
 
+  const updateCalendarSelfVotes = useCallback((messageId: string, dates: number[]) => {
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id !== messageId || !m.calendarVotes) return m;
+        const others = m.calendarVotes.filter(v => v.sender !== 'P');
+        const nextVotes = dates.length > 0 ? [...others, { sender: 'P' as const, dates }] : others;
+        return { ...m, calendarVotes: nextVotes };
+      })
+    );
+  }, []);
+
   const renderItem: ListRenderItem<LocalMessage> = ({ item }) => {
     if (item.calendarVotes) {
       return (
         <View style={[styles.messageRow, styles.rowLeft]}>
           <View style={styles.calendarCardWrap}>
-            <CalendarCard month={2} year={2026} votes={item.calendarVotes} senders={SENDERS} />
+            <CalendarCard
+              month={2}
+              year={2026}
+              votes={item.calendarVotes}
+              senders={SENDERS}
+              selfSenderId="P"
+              onSelfDatesChange={dates => updateCalendarSelfVotes(item.id, dates)}
+            />
           </View>
         </View>
       );
